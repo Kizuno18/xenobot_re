@@ -27,9 +27,11 @@ module that the launcher downloads from the server at runtime (see below).
 Data assets: `Sounds/*.wav` (alarm sounds), `Examples/*.lua` (10 example bot
 scripts — the public XenoBot Lua API surface).
 
-**Not in the distribution:** the injected bot core (cavebot, targeting, healer,
-Lua game API, client hooks). `XenoSuite.exe` fetches it from xenobot.net after a
-license check — acquiring it is a separate dynamic step ([`docs/00-status.md`](docs/00-status.md)).
+**The bot core** (cavebot, targeting, healer, Lua game API, client hooks) is not
+in `setup.msi` — `XenoSuite.exe` fetches it from xenobot.net after a license
+check. It has since been **recovered**: XenoBot went free/EOL, and the old
+monolithic RARs ship the injected `XenoBot.dll` directly. It is now RE'd
+function-by-function ([`docs/16`](docs/16-bot-core.md), [`docs/19`](docs/19-bot-core-engines.md)).
 
 ## Docs
 
