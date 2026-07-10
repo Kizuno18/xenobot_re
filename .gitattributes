@@ -1,0 +1,18 @@
+* text=auto eol=lf
+
+*.py    text eol=lf
+*.md    text eol=lf
+*.lua   text eol=lf
+*.json  text eol=lf
+*.txt   text eol=lf
+
+*.exe   binary
+*.dll   binary
+*.msi   binary
+*.wav   binary
+*.bin   binary
+*.png   binary
+*.jpg   binary
+*.pdf   binary
+*.i64   binary
+*.idb   binary

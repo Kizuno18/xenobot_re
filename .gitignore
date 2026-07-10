@@ -1,0 +1,32 @@
+# MCP config carries the per-VM access token — keep local
+.mcp.json
+
+# acquired third-party binaries (vendor-copyrighted; referenced by sha256 in
+# samples/SAMPLES.md, delivered to the analysis VM out-of-band)
+samples/*.exe
+samples/*.dll
+samples/*.msi
+samples/Sounds/
+/downloads/
+
+# IDA / Ghidra working files (regenerable)
+*.i64
+*.idb
+*.til
+*.nam
+*.id0
+*.id1
+*.id2
+*.asm
+*.gpr
+*.rep
+
+# scratch / local
+*.log
+scratch/
+tmp/
+
+# python
+__pycache__/
+*.pyc
+.venv/
