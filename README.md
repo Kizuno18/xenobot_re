@@ -44,7 +44,12 @@ license check — acquiring it is a separate dynamic step ([`docs/00-status.md`]
 | [`docs/06-integrity.md`](docs/06-integrity.md) | `WinVerifyTrust` self-tamper check + acceptance policy |
 | [`docs/07-support-subsystems.md`](docs/07-support-subsystems.md) | Embedded `RT_RCDATA` resource, Lua host, GDI screenshot, `CreateProcessW` launcher |
 | [`docs/08-detection-map.md`](docs/08-detection-map.md) | **Consolidated anti-cheat fingerprints** (network / host / IPC / static) |
-| [`docs/functions/catalog.md`](docs/functions/catalog.md) | Full per-function catalog of `XenoSuite.exe` (all 1325 classified) |
+| [`docs/09-control-flow.md`](docs/09-control-flow.md) | **Master control flow** — boot, `http://` web-launch handler, window/timers/threads |
+| [`docs/10-injection-framework.md`](docs/10-injection-framework.md) | LoadLibraryW versioned module + manual PE mapper + ntdll anti-hook |
+| [`docs/11-embedded-module-crypto.md`](docs/11-embedded-module-crypto.md) | The `.rsrc` = XTEA-encrypted **XenoObfuscatedLib** (DarkstaR); decryptor |
+| [`docs/12-address-profiles.md`](docs/12-address-profiles.md) | Per-version client offsets in XOR-encrypted `.xblua` Lua tables |
+| [`docs/13-multiclient-handles.md`](docs/13-multiclient-handles.md) | Multiclient: `NtQuerySystemInformation` handle enum + `TibiaPlayerMutex` release |
+| [`docs/functions/catalog.md`](docs/functions/catalog.md) | Full per-function catalog — every function named + purposed (141 bot) |
 
 ## Method
 

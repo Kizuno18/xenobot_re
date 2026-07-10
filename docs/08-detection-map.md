@@ -38,6 +38,27 @@ All traffic is plain HTTP/80, no TLS.
   that XenoSuite has not been tampered with."*), acceptance predicate
   `r == 0 || r == 0x80092026 || r == 0x800B0004` at RVA `0x401000`.
 
+## Injection framework & self-protection (deep)
+
+See [`10`](10-injection-framework.md)–[`13`](13-multiclient-handles.md).
+
+- **Manual PE mapping**: a hand-rolled loader (`VirtualAlloc(SizeOfImage)` +
+  section copy + reloc fixups + `GetProcAddress` import resolution) producing an
+  executable region not in the module list — used to load the embedded module.
+- **ntdll anti-hook**: `GetProcAddress(ntdll, "NtProtectVirtualMemory")` /
+  `NtQuerySystemInformation` resolved by name to bypass hooked `kernel32`.
+- **XenoObfuscatedLib**: the 80 KB `.rsrc` is an XTEA-encrypted PE (res `0x66`
+  cipher + `0x67` key, key `4_j,Ac?jV4tx!YKT`), decrypted + manual-mapped in
+  process. It (DarkstaR's `XenoObfuscatedLib.pdb`) does its own WinHTTP license
+  check, `CheckRemoteDebuggerPresent` anti-debug (*"Please close all debuggers
+  before logging in to XenoBot."*), and HWID (`GetVolumeInformationA`).
+- **`.xblua` address profiles**: XOR-encrypted (key `x3n0L04d3r)(87^%43@!`) Lua
+  offset tables under `Addresses\`; constants `0x0BADF00D` + `0x1234565`; an
+  embedded Lua state reading `BattleListStart`/`SendOutgoingPacket`/`CurrentTarget`.
+- **Multiclient**: `NtQuerySystemInformation(SystemHandleInformation)` +
+  `NtQueryObject` to find `TibiaPlayerMutex`, then `DuplicateHandle`
+  (`DUPLICATE_CLOSE_SOURCE`) to release it — multiple `Tibia.exe`, no mutex held.
+
 ## Local IPC (host-side)
 
 - Named-pipe server `\\.\pipe\…` (`CreateNamedPipeW`) and Qt local server

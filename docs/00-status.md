@@ -14,41 +14,38 @@ Resume point for the XenoBot RE. What is done, what is in progress.
   surface; injection chain, IPC, and update roles mapped to specific APIs
   ([`01-overview.md`](01-overview.md)).
 
-- **XenoSuite.exe in IDA** — opened on `re03` (idalib, unpacked, full
-  auto-analysis), 1325 functions. Full catalog built + classified
-  ([`functions/catalog.md`](functions/catalog.md)); 62 bot-authored functions
-  named + commented, persisted into `XenoSuite.exe.i64`.
-- **Subsystems documented** — injection chain ([03](03-injection-chain.md)),
-  tracked-client list + IPC ([04](04-ipc.md)), license/update/telemetry
-  ([05](05-network-update.md)), integrity self-check ([06](06-integrity.md)),
-  resource/Lua/screenshot/launch ([07](07-support-subsystems.md)).
-- **Detection map** — consolidated fingerprints ([08](08-detection-map.md)),
-  including the four HTTP endpoints and the cleartext-password monitor telemetry.
-
-## In progress
-
-- **Full function naming** — 62 of the ~150 bot-authored functions are named; the
-  ~776 unnamed `sub_` helpers (Qt/STL glue + minor dispatchers) are catalogued but
-  not individually named. Next pass: name the remaining bot-authored helpers
-  (verification thread, monitor submit, login relay, the `sub_410F30` pipe message
-  parser) and follow the `findResource`→consumer xref for the `.rsrc` payload.
+- **XenoSuite.exe fully named in IDA** — 1325 functions; **1279 named + purpose
+  comments** in `XenoSuite.exe.i64` (all 758 sub_* named across two workflow
+  passes; only 46 tiny thunks left). Full per-function catalog with 141
+  bot-authored functions ([`functions/catalog.md`](functions/catalog.md)).
+- **Master control flow** — boot → `runXenoSuiteApplication` →
+  `xenoSuiteApplicationExec`, the `http://` web-launch `.xbst` handler, window
+  timers, the user/timer/thread driver classes ([09](09-control-flow.md)).
+- **Subsystems documented (deep)**:
+  - injection chain ([03](03-injection-chain.md)) + the full injection framework
+    — manual PE mapper, ntdll anti-hook, versioned module ([10](10-injection-framework.md));
+  - **XenoObfuscatedLib** cracked — the `.rsrc` is an XTEA-encrypted PE (DarkstaR's
+    anti-debug/HWID/WinHTTP core); `tools/decrypt_xenooblib.py` recovers it
+    ([11](11-embedded-module-crypto.md));
+  - per-version `.xblua` address profiles (XOR Lua offset tables) ([12](12-address-profiles.md));
+  - multiclient via `TibiaPlayerMutex` handle release ([13](13-multiclient-handles.md));
+  - IPC ([04](04-ipc.md)), license/update/telemetry ([05](05-network-update.md)),
+    integrity ([06](06-integrity.md)), resource/Lua/screenshot/launch ([07](07-support-subsystems.md)).
+- **Detection map** — consolidated fingerprints, now incl. manual-map / ntdll
+  anti-hook / XenoObfuscatedLib / `.xblua` / mutex-kill ([08](08-detection-map.md)).
 
 ## TODO
 
-- **Acquire the bot core** (the runtime-fetched injected module) — the real
-  game-logic + anti-cheat surface. Options, cheapest first:
-  1. inspect `Client10_Protocol1120.zip` (57 MB) — may bundle the module or the
-     pre-patched client;
-  2. drive `XenoSuite.exe`'s update flow on the isolated VM and capture the
-     download (Wireshark MCP / a proxy);
-  3. inject into a live Tibia on the VM and pe-sieve the module out of memory.
-- **Bot-core RE** — client memory-offset table (per Tibia version), packet hooks,
-  the full Lua game API, cavebot/targeting/healer engines — once the module is in
-  hand.
-- **Confirm lua5.1.dll unmodified** — byte/hash compare against an upstream
-  5.1.4 build.
-- **Detection map** — distil the launcher + core findings into anti-cheat
-  fingerprints (injection signature, pipe/socket names, network IOCs).
+- **Acquire the bot core** (the runtime-fetched injected module under `Versions\`)
+  — the real game-logic + anti-cheat surface. Cheapest first: drive the update
+  flow on the isolated VM and capture the download (Wireshark MCP / proxy); or
+  inject into a live Tibia and pe-sieve the module.
+- **RE XenoObfuscatedLib** — the decrypted DLL (`tools/decrypt_xenooblib.py`) is a
+  plain VS2010 PE; upload to IDA and document the anti-debug / HWID / WinHTTP
+  license logic for full protection-layer coverage.
+- **Bot-core RE** — client memory-offset table (the `.xblua` set decodes it per
+  version), packet hooks, the Lua game API, cavebot/targeting/healer — once the
+  module is in hand.
 
 ## Conventions
 
