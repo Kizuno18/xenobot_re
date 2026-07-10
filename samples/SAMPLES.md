@@ -41,6 +41,13 @@ Kept (XenoBot):
 | `setup.msi` | 5,920,768 | `a759e31d128d1bee986fbbd4e3c748841b4a180b7c41e2e65da17f1cd1ddbecd` |
 | `XenoSuite.exe` | 438,776 | `aaabcb4d554afee0363dc2c3fb7a6d2e972e0d0ace6b4e19f76609ed367c1391` |
 
+Recovered (decrypted from `XenoSuite.exe` `.rsrc` — regenerate with
+`tools/decrypt_xenooblib.py`, not committed):
+
+| file | size | sha256 |
+|---|---|---|
+| `XenoObfuscatedLib.dll` | 48,648 | `8170194ad7be59d44de4b59d78d202af00a1ec4ed00bfb5f2370df31fe92969e` |
+
 Discarded (stock third-party — hashes for version ID only):
 
 | file | size | sha256 | identity |
