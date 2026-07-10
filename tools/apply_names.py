@@ -50,19 +50,24 @@ def main():
         if p:
             comments.append({"addr": a, "comment": f"[{r.get('category','?')}] {p[:400]}"})
 
-    # define all (idempotent), then rename, then comment, then save
-    m.call("ida", "tools/call", {"name": "define_func",
-        "arguments": {"database": DB, "items": [{"addr": x["addr"]} for x in renames]}})
-    rr = content(m.call("ida", "tools/call", {"name": "rename",
-        "arguments": {"database": DB, "batch": {"func": renames, "allow_overwrite": True}}}))
-    try:
-        print("rename:", json.loads(rr).get("summary"))
-    except Exception:
-        print("rename:", rr[:200])
-    # comments in chunks of 300
-    for i in range(0, len(comments), 300):
+    # chunk everything so no single call overloads the idalib worker
+    CH = 150
+    for i in range(0, len(renames), CH):
+        m.call("ida", "tools/call", {"name": "define_func",
+            "arguments": {"database": DB, "items": [{"addr": x["addr"]} for x in renames[i:i + CH]]}})
+    ok = 0
+    for i in range(0, len(renames), CH):
+        rr = content(m.call("ida", "tools/call", {"name": "rename",
+            "arguments": {"database": DB, "batch": {"func": renames[i:i + CH], "allow_overwrite": True}}}))
+        try:
+            ok += json.loads(rr).get("summary", {}).get("ok", 0)
+        except Exception:
+            pass
+        print(f"  renamed {i + CH}/{len(renames)} (ok so far {ok})", flush=True)
+    print("rename total ok:", ok)
+    for i in range(0, len(comments), CH):
         m.call("ida", "tools/call", {"name": "set_comments",
-            "arguments": {"database": DB, "items": comments[i:i + 300]}})
+            "arguments": {"database": DB, "items": comments[i:i + CH]}})
     print("comments set:", len(comments))
     sv = content(m.call("ida", "tools/call", {"name": "idb_save", "arguments": {"database": DB}}))
     print("save:", sv[:120])

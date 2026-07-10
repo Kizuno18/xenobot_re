@@ -54,6 +54,7 @@ license check — acquiring it is a separate dynamic step ([`docs/00-status.md`]
 | [`docs/16-bot-core.md`](docs/16-bot-core.md) | **The recovered bot core** `XenoBot.dll` (free EOL RARs): triage, Lua API, hooks |
 | [`docs/17-auth-and-distribution.md`](docs/17-auth-and-distribution.md) | `verify.php` SYN/SYNACK auth, free/EOL status, full site download inventory |
 | [`docs/18-re-journey.md`](docs/18-re-journey.md) | **Engagement log** — the whole RE arc (launcher → protection core → dynamic → bot core) |
+| [`docs/19-bot-core-engines.md`](docs/19-bot-core-engines.md) | **Bot-core engines** `XenoBot.dll` — address resolution, hooks, packet, cavebot/targeting/healer, Lua host |
 | [`docs/functions/catalog.md`](docs/functions/catalog.md) | Full per-function catalog — every function named + purposed (141 bot) |
 
 ## Method
