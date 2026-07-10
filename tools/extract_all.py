@@ -43,13 +43,43 @@ def all_funcs():
     return out
 
 
+import time
+
+INPUT_PATH = os.environ.get("XB_INPUT", "")  # for session re-open on worker crash
+
+
+def reopen():
+    global DB
+    if not INPUT_PATH:
+        return
+    for _ in range(10):
+        try:
+            r = json.loads(content(m.call("ida", "tools/call", {"name": "idb_open",
+                "arguments": {"input_path": INPUT_PATH, "run_auto_analysis": True, "idle_ttl_sec": 2400}})))
+            DB = r.get("session", {}).get("session_id") or DB
+            return
+        except Exception:
+            time.sleep(15)
+
+
 def decompile(addr):
-    txt = content(m.call("ida", "tools/call", {"name": "decompile", "arguments": {"database": DB, "addr": addr}}))
-    try:
-        d = json.loads(txt)
-    except json.JSONDecodeError:
-        return None
-    return d.get("code") if isinstance(d, dict) else None
+    for attempt in range(4):
+        try:
+            txt = content(m.call("ida", "tools/call", {"name": "decompile", "arguments": {"database": DB, "addr": addr}}))
+        except Exception:
+            time.sleep(5)
+            continue
+        if "Session not found" in txt or "not reachable" in txt:
+            reopen()
+            time.sleep(3)
+            continue
+        try:
+            d = json.loads(txt)
+        except json.JSONDecodeError:
+            return None
+        time.sleep(0.15)  # pace to avoid overwhelming the idalib worker
+        return d.get("code") if isinstance(d, dict) else None
+    return None
 
 
 def main():

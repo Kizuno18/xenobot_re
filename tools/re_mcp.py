@@ -44,11 +44,24 @@ def _post(url, payload, session_id=None):
     if session_id:
         headers["Mcp-Session-Id"] = session_id
     req = urllib.request.Request(url, data=body, headers=headers, method="POST")
-    try:
-        resp = urllib.request.urlopen(req, timeout=300)
-    except urllib.error.HTTPError as e:
-        sys.stderr.write(f"HTTP {e.code} on {method_of(payload)}: {e.read().decode('utf-8','replace')[:400]}\n")
-        raise
+    # retry transient gateway/worker errors (502/503/504) with backoff
+    for attempt in range(6):
+        try:
+            resp = urllib.request.urlopen(req, timeout=300)
+            break
+        except urllib.error.HTTPError as e:
+            if e.code in (502, 503, 504) and attempt < 5:
+                import time as _t
+                _t.sleep(3 * (attempt + 1))
+                continue
+            sys.stderr.write(f"HTTP {e.code} on {method_of(payload)}: {e.read().decode('utf-8','replace')[:200]}\n")
+            raise
+        except (urllib.error.URLError, TimeoutError) as e:
+            if attempt < 5:
+                import time as _t
+                _t.sleep(3 * (attempt + 1))
+                continue
+            raise
     sid = resp.headers.get("Mcp-Session-Id")
     raw = resp.read().decode("utf-8", "replace")
     ctype = resp.headers.get("Content-Type", "")
