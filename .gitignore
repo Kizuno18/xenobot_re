@@ -30,3 +30,8 @@ tmp/
 __pycache__/
 *.pyc
 .venv/
+
+# bot-core binaries (vendor; text lua/xml committed, binaries not)
+samples/**/*.dll
+samples/**/*.exe
+samples/**/*.rar

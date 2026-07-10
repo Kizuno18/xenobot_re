@@ -1,0 +1,12 @@
+function class(superclass, name)
+    local cls = superclass and superclass() or {}
+    cls.__name = name or ""
+    cls.__super = superclass
+    return setmetatable(cls, {__call = function (c, ...)
+        self = setmetatable({__class = cls}, cls)
+        if cls.__init then
+            cls.__init(self, ...)
+        end
+        return self
+    end})
+end

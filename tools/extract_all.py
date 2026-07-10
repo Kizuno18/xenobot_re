@@ -14,7 +14,9 @@ import re_mcp as m
 
 DB = sys.argv[1] if len(sys.argv) > 1 else "97300807"
 OUT = sys.argv[2] if len(sys.argv) > 2 else "xeno_decomp.jsonl"
-TEXT_LO, TEXT_HI = 0x401000, 0x430000
+# optional lo/hi hex bounds; default wide (covers 0x40x EXE + 0x100x DLL imagebases)
+TEXT_LO = int(sys.argv[3], 16) if len(sys.argv) > 3 else 0x400000
+TEXT_HI = int(sys.argv[4], 16) if len(sys.argv) > 4 else 0x11000000
 MIN_SIZE = 16
 
 
