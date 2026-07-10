@@ -43,12 +43,18 @@ Resume point for the XenoBot RE. What is done, what is in progress.
   The core **bytes are license-gated** (download 404s without an `online.php`
   session); headless launch of `XenoSuite.exe` also fails (no interactive desktop).
 
+- **Bot core RECOVERED** ([16](16-bot-core.md)) — XenoBot went free/EOL; the old
+  monolithic RARs (`XenoBot 1.2.2/1.3.4`) on xenobot.net ship the injected
+  `XenoBot.dll` directly, no license gate. Unpacked x86, VS2008, 1822 functions,
+  DarkstaR, in IDA on re03. Lua API + hook imports confirmed.
+
 ## TODO
 
-- **Pull the bot-core bytes** — needs an RDP/console session on the VM **and** a
-  valid XenoBot license: run XenoSuite, log in, it writes `Versions\xb.*.dll` +
-  `Addresses\*.xblua`; then RE the DLL statically and decrypt the `.xblua` with
-  the XOR key `x3n0L04d3r)(87^%43@!`.
+- **Function-by-function RE of `XenoBot.dll`** (task in progress) — bulk decompile
+  → naming workflow → apply → subsystem deep-dives (same pipeline as XenoSuite).
+  Map the Lua game API table to its C handlers; document the cavebot / targeting /
+  healer / client-hook engines. The modern licensed cores (`xb.*.dll`) can be
+  pulled later via the launcher (RDP + login `user/xenobot`) for a version diff.
 - **RE XenoObfuscatedLib** — the decrypted DLL (`tools/decrypt_xenooblib.py`) is a
   plain VS2010 PE; upload to IDA and document the anti-debug / HWID / WinHTTP
   license logic for full protection-layer coverage.
