@@ -13,8 +13,13 @@ The five PE files + `Sounds/` + `Examples/` are the CAB payload, extracted with
 carry obfuscated CAB keys).
 
 A second bundle, `Client10_Protocol1120.zip` (57 MB,
-`https://www.xenobot.net/downloads/Client10_Protocol1120.zip`), is XenoBot's
-packaged Tibia 10 / protocol-1120 client — not yet acquired here.
+`https://www.xenobot.net/downloads/Client10_Protocol1120.zip`,
+sha256 `0d4fc2f499b2119d4ad8be5d7f8caaf55aa65bd25bad6a011476636b6dcaca05`),
+was checked: it is the **stock Tibia 11.20 client only** (`11.20/Tibia.exe`,
+`Tibia.dat`, `Patch.exe`, Inno `unins000.*`) — no XenoBot module bundled. This
+confirms the injected bot core is fetched exclusively at runtime from
+`http://xenobot.net/update/%1/` after the license check, so acquiring it needs a
+dynamic run with a valid license (out-of-band, on the VM).
 
 ## Hashes (sha256)
 
