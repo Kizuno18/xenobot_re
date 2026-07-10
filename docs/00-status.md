@@ -34,12 +34,21 @@ Resume point for the XenoBot RE. What is done, what is in progress.
 - **Detection map** — consolidated fingerprints, now incl. manual-map / ntdll
   anti-hook / XenoObfuscatedLib / `.xblua` / mutex-kill ([08](08-detection-map.md)).
 
+## Dynamic (re03)
+
+- **Update channel mapped live** ([15](15-update-channel-and-core.md)) — the
+  `verify.xenobot.net/update.php?version=2` manifest gives the full bot-core
+  inventory: **17 core `xb.*.dll` + 17 `xb.*.lua` + 63 `.xblua` profiles**
+  (`docs/data/update-manifest.txt`). Each core = native DLL + per-build Lua logic.
+  The core **bytes are license-gated** (download 404s without an `online.php`
+  session); headless launch of `XenoSuite.exe` also fails (no interactive desktop).
+
 ## TODO
 
-- **Acquire the bot core** (the runtime-fetched injected module under `Versions\`)
-  — the real game-logic + anti-cheat surface. Cheapest first: drive the update
-  flow on the isolated VM and capture the download (Wireshark MCP / proxy); or
-  inject into a live Tibia and pe-sieve the module.
+- **Pull the bot-core bytes** — needs an RDP/console session on the VM **and** a
+  valid XenoBot license: run XenoSuite, log in, it writes `Versions\xb.*.dll` +
+  `Addresses\*.xblua`; then RE the DLL statically and decrypt the `.xblua` with
+  the XOR key `x3n0L04d3r)(87^%43@!`.
 - **RE XenoObfuscatedLib** — the decrypted DLL (`tools/decrypt_xenooblib.py`) is a
   plain VS2010 PE; upload to IDA and document the anti-debug / HWID / WinHTTP
   license logic for full protection-layer coverage.

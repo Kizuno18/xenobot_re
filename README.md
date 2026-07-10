@@ -50,6 +50,7 @@ license check — acquiring it is a separate dynamic step ([`docs/00-status.md`]
 | [`docs/12-address-profiles.md`](docs/12-address-profiles.md) | Per-version client offsets in XOR-encrypted `.xblua` Lua tables |
 | [`docs/13-multiclient-handles.md`](docs/13-multiclient-handles.md) | Multiclient: `NtQuerySystemInformation` handle enum + `TibiaPlayerMutex` release |
 | [`docs/14-xenoobfuscatedlib.md`](docs/14-xenoobfuscatedlib.md) | The decrypted protection core: `/verify.php` license, HWID, anti-debug |
+| [`docs/15-update-channel-and-core.md`](docs/15-update-channel-and-core.md) | Update channel + live bot-core inventory (17 DLL+Lua cores, 63 `.xblua`); dynamic test |
 | [`docs/functions/catalog.md`](docs/functions/catalog.md) | Full per-function catalog — every function named + purposed (141 bot) |
 
 ## Method
