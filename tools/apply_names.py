@@ -12,8 +12,36 @@ import sys, os, json, re
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import re_mcp as m
 
+import time
 DB = sys.argv[1] if len(sys.argv) > 1 else "97300807"
 SRC = sys.argv[2] if len(sys.argv) > 2 else "names.json"
+INPUT_PATH = os.environ.get("XB_INPUT", "")
+
+
+def reopen():
+    global DB
+    if not INPUT_PATH:
+        return
+    for _ in range(12):
+        try:
+            r = json.loads(content(m.call("ida", "tools/call", {"name": "idb_open",
+                "arguments": {"input_path": INPUT_PATH, "run_auto_analysis": False, "idle_ttl_sec": 3000}})))
+            DB = r.get("session", {}).get("session_id") or DB
+            return
+        except Exception:
+            time.sleep(20)
+
+
+def safe(tool, args):
+    for _ in range(4):
+        try:
+            r = content(m.call("ida", "tools/call", {"name": tool, "arguments": {**args, "database": DB}}))
+            if "Session not found" in r or "not reachable" in r:
+                reopen(); args = {**args}; time.sleep(2); continue
+            return r
+        except Exception:
+            reopen(); time.sleep(2)
+    return ""
 
 
 def content(res):
@@ -50,27 +78,19 @@ def main():
         if p:
             comments.append({"addr": a, "comment": f"[{r.get('category','?')}] {p[:400]}"})
 
-    # chunk everything so no single call overloads the idalib worker
-    CH = 150
+    # chunk + save periodically so a worker crash costs at most one chunk
+    CH = 100
     for i in range(0, len(renames), CH):
-        m.call("ida", "tools/call", {"name": "define_func",
-            "arguments": {"database": DB, "items": [{"addr": x["addr"]} for x in renames[i:i + CH]]}})
-    ok = 0
-    for i in range(0, len(renames), CH):
-        rr = content(m.call("ida", "tools/call", {"name": "rename",
-            "arguments": {"database": DB, "batch": {"func": renames[i:i + CH], "allow_overwrite": True}}}))
-        try:
-            ok += json.loads(rr).get("summary", {}).get("ok", 0)
-        except Exception:
-            pass
-        print(f"  renamed {i + CH}/{len(renames)} (ok so far {ok})", flush=True)
-    print("rename total ok:", ok)
-    for i in range(0, len(comments), CH):
-        m.call("ida", "tools/call", {"name": "set_comments",
-            "arguments": {"database": DB, "items": comments[i:i + CH]}})
-    print("comments set:", len(comments))
-    sv = content(m.call("ida", "tools/call", {"name": "idb_save", "arguments": {"database": DB}}))
-    print("save:", sv[:120])
+        chunk = renames[i:i + CH]
+        cchunk = [c for c in comments if c["addr"] in {x["addr"] for x in chunk}]
+        safe("define_func", {"items": [{"addr": x["addr"]} for x in chunk]})
+        safe("rename", {"batch": {"func": chunk, "allow_overwrite": True}})
+        if cchunk:
+            safe("set_comments", {"items": cchunk})
+        if (i // CH) % 3 == 2:
+            safe("idb_save", {})
+        print(f"  applied {min(i + CH, len(renames))}/{len(renames)}", flush=True)
+    print("save:", safe("idb_save", {})[:120])
 
 
 if __name__ == "__main__":
