@@ -14,16 +14,24 @@ Resume point for the XenoBot RE. What is done, what is in progress.
   surface; injection chain, IPC, and update roles mapped to specific APIs
   ([`01-overview.md`](01-overview.md)).
 
+- **XenoSuite.exe in IDA** — opened on `re03` (idalib, unpacked, full
+  auto-analysis), 1325 functions. Full catalog built + classified
+  ([`functions/catalog.md`](functions/catalog.md)); 62 bot-authored functions
+  named + commented, persisted into `XenoSuite.exe.i64`.
+- **Subsystems documented** — injection chain ([03](03-injection-chain.md)),
+  tracked-client list + IPC ([04](04-ipc.md)), license/update/telemetry
+  ([05](05-network-update.md)), integrity self-check ([06](06-integrity.md)),
+  resource/Lua/screenshot/launch ([07](07-support-subsystems.md)).
+- **Detection map** — consolidated fingerprints ([08](08-detection-map.md)),
+  including the four HTTP endpoints and the cleartext-password monitor telemetry.
+
 ## In progress
 
-- **XenoSuite.exe function catalog** — open in IDA (idalib) on `re03`, recover +
-  name + one-line every function, driven over the MCP gateway. Priority clusters:
-  1. the injector (`OpenProcess`→`CreateRemoteThread` site + the `.rsrc` loader),
-  2. the named-pipe + `QLocalServer` IPC endpoints (names + ACL),
-  3. the `QNetworkAccessManager` license/update flow (endpoints, User-Agent),
-  4. the embedded Lua host,
-  5. the screenshot/alarm path.
-  Output to `docs/functions/`; names persisted into `XenoSuite.exe.i64` on the VM.
+- **Full function naming** — 62 of the ~150 bot-authored functions are named; the
+  ~776 unnamed `sub_` helpers (Qt/STL glue + minor dispatchers) are catalogued but
+  not individually named. Next pass: name the remaining bot-authored helpers
+  (verification thread, monitor submit, login relay, the `sub_410F30` pipe message
+  parser) and follow the `findResource`→consumer xref for the `.rsrc` payload.
 
 ## TODO
 

@@ -38,7 +38,13 @@ license check — acquiring it is a separate dynamic step ([`docs/00-status.md`]
 | [`docs/00-status.md`](docs/00-status.md) | Resume point — what's done / in progress / TODO |
 | [`docs/01-overview.md`](docs/01-overview.md) | Architecture: launcher vs bot-core split, injection chain, IPC, subsystem map |
 | [`docs/02-static-analysis.md`](docs/02-static-analysis.md) | PE structure, sections, imports, exports per binary; the injection/IPC/update API evidence |
-| `docs/functions/` | Full per-function catalog of `XenoSuite.exe` (in progress) |
+| [`docs/03-injection-chain.md`](docs/03-injection-chain.md) | Target discovery (`"TibiaClient"`) + `LoadLibraryW` remote-thread injection, function-by-function |
+| [`docs/04-ipc.md`](docs/04-ipc.md) | The tracked-client list + local IPC (named pipe + `xenosuitesock%1` QLocalServer, `SOCKET_*` vocabulary) |
+| [`docs/05-network-update.md`](docs/05-network-update.md) | License/update/download + the password-leaking monitor telemetry; all endpoints |
+| [`docs/06-integrity.md`](docs/06-integrity.md) | `WinVerifyTrust` self-tamper check + acceptance policy |
+| [`docs/07-support-subsystems.md`](docs/07-support-subsystems.md) | Embedded `RT_RCDATA` resource, Lua host, GDI screenshot, `CreateProcessW` launcher |
+| [`docs/08-detection-map.md`](docs/08-detection-map.md) | **Consolidated anti-cheat fingerprints** (network / host / IPC / static) |
+| [`docs/functions/catalog.md`](docs/functions/catalog.md) | Full per-function catalog of `XenoSuite.exe` (all 1325 classified) |
 
 ## Method
 

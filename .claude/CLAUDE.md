@@ -23,6 +23,16 @@ Read `README.md`, then `docs/` (00 status, 01 overview, 02 static analysis).
   `WinVerifyTrust`, GDI screenshot APIs, embedded `lua5.1`.
 - **Qt + Lua DLLs are stock** (Qt 4.8.6 2014-04-23; Lua 5.1.4). Out of scope
   beyond version ID. All XenoBot-authored installer code is in `XenoSuite.exe`.
+- **Proven (don't re-RE, see `docs/03-08`).** Injection = `enumTibiaClientWindows`
+  (class `"TibiaClient"`, `OpenProcess 0x4FA`) → `injectLoadLibraryW`
+  (`VirtualAllocEx`+`WriteProcessMemory`+`CreateRemoteThread`→`LoadLibraryW`, by
+  path). Endpoints (all HTTP/80): license `verify.xenobot.net/online.php`, update
+  `verify.xenobot.net/update.php?version=2`, download `xenobot.net/update/%1/`,
+  telemetry `forums.xenobot.net/misc.php?do=monitorsubmit&name=&pass=&…`
+  (**leaks account password in cleartext**). IPC = named pipe `\\.\pipe\…` +
+  QLocalServer `xenosuitesock%1`, class `XenoSuiteIpc`, vocab `SOCKET_ONLINE/
+  PENDING/LOGINREQ/LOGINREC`, `XBONLINE`. `WinVerifyTrust` self-tamper check at
+  `0x401000`. IDA session names persisted to `XenoSuite.exe.i64` on re03.
 
 ## RE lab (windows-lab MCP gateway)
 
