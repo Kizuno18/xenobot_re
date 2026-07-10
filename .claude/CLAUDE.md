@@ -52,4 +52,6 @@ Read `README.md`, then `docs/` (00 status, 01 overview, 02 static analysis).
   VM out-of-band (HTTP upload), referenced by sha256 in `samples/SAMPLES.md`.
 - Addresses file-absolute at the stated imagebase; doc function names match the
   IDA db. Branch for work; don't commit straight to `main`.
-- Model the docs on `../elfbot_re` (numbered docs + `docs/functions/` catalog).
+- Doc structure: numbered `docs/` (00 status, 01 overview, 02 static analysis,
+  then per-subsystem) + a `docs/functions/` catalog. Self-contained — this repo is
+  XenoBot only, no references to other bots' repos.

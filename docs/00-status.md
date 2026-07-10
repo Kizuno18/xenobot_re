@@ -43,8 +43,8 @@ Resume point for the XenoBot RE. What is done, what is in progress.
      download (Wireshark MCP / a proxy);
   3. inject into a live Tibia on the VM and pe-sieve the module out of memory.
 - **Bot-core RE** — client memory-offset table (per Tibia version), packet hooks,
-  the full Lua game API, cavebot/targeting/healer engines. Mirrors the elfbot_re
-  subsystem breakdown once the module is in hand.
+  the full Lua game API, cavebot/targeting/healer engines — once the module is in
+  hand.
 - **Confirm lua5.1.dll unmodified** — byte/hash compare against an upstream
   5.1.4 build.
 - **Detection map** — distil the launcher + core findings into anti-cheat
