@@ -48,19 +48,26 @@ Resume point for the XenoBot RE. What is done, what is in progress.
   `XenoBot.dll` directly, no license gate. Unpacked x86, VS2008, 1822 functions,
   DarkstaR, in IDA on re03. Lua API + hook imports confirmed.
 
-## TODO
+- **Bot core RE'd** — `XenoBot.dll` 1.3.4: 1649/1822 functions named + purposed
+  (392 bot / 728 Lua VM / 394 CRT / 134 thunk), engines mapped ([19](19-bot-core-engines.md)),
+  the 9 Hex-Rays-failed stubs decoded offline. Packet opcode→handler dispatch map
+  documented. Finding: 1.3.4 has no `getCreature*` Lua C-API (that surface is in
+  the later licensed cores).
+- **XenoObfuscatedLib fully RE'd** — all 159 functions named; the 23 protection
+  functions documented ([14](14-xenoobfuscatedlib.md)): XOR string-deobfuscation
+  (fallback host `verify.xf.yone.to`), hosts-file anti-crack, SYN→SYNACK license
+  handshake + MD5 HWID + WebStreamer (WinHTTP), the anti-debug suite
+  (`RtlSetProcessIsCritical` BSOD / DRx / kernel-debugger scan), and the
+  license-gated injection (magic `0xBADF00D`).
 
-- **Function-by-function RE of `XenoBot.dll`** (task in progress) — bulk decompile
-  → naming workflow → apply → subsystem deep-dives (same pipeline as XenoSuite).
-  Map the Lua game API table to its C handlers; document the cavebot / targeting /
-  healer / client-hook engines. The modern licensed cores (`xb.*.dll`) can be
-  pulled later via the launcher (RDP + login `user/xenobot`) for a version diff.
-- **RE XenoObfuscatedLib** — the decrypted DLL (`tools/decrypt_xenooblib.py`) is a
-  plain VS2010 PE; upload to IDA and document the anti-debug / HWID / WinHTTP
-  license logic for full protection-layer coverage.
-- **Bot-core RE** — client memory-offset table (the `.xblua` set decodes it per
-  version), packet hooks, the Lua game API, cavebot/targeting/healer — once the
-  module is in hand.
+## Optional / follow-up
+
+- Version-diff the modern licensed cores (`xb.*.dll`) against 1.3.4 to recover the
+  full `getCreature*` Lua game-API → C-handler map (needs a licensed core via the
+  launcher, RDP + `user/xenobot`).
+- The three `.i64`s (`XenoSuite`/`XenoBotCore`/`XenoObfuscatedLib`) hold the applied
+  names; the core's last chunk is re-applied on demand if a worker crash drops it
+  (all names live in the committed catalogs regardless).
 
 ## Conventions
 
