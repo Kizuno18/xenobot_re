@@ -87,8 +87,7 @@ def main():
         safe("rename", {"batch": {"func": chunk, "allow_overwrite": True}})
         if cchunk:
             safe("set_comments", {"items": cchunk})
-        if (i // CH) % 3 == 2:
-            safe("idb_save", {})
+        safe("idb_save", {})   # save every chunk so nothing is lost to a worker crash
         print(f"  applied {min(i + CH, len(renames))}/{len(renames)}", flush=True)
     print("save:", safe("idb_save", {})[:120])
 
