@@ -1,11 +1,11 @@
 # XenoBot.dll (bot core) — function catalog
 
-All 1648 functions of `XenoBot.dll` 1.3.4 (imagebase `0x10000000`, VS2008, 1822 total) named + given a purpose from Hex-Rays, persisted to the `.i64`.
+All 1649 functions of XenoBot.dll 1.3.4 (imagebase 0x10000000, VS2008, 1822 total incl. thunks) named + purposed from Hex-Rays (the 9 Hex-Rays-failed stubs decoded offline via capstone).
 
-- **bot** (XenoBot core logic): 392
-- **lua** (statically-linked Lua 5.1 VM): 728
-- **crt** (MSVC90 STL/CRT): 394
-- **thunk**: 134
+- **bot**: 392
+- **lua** (static Lua 5.1 VM): 728
+- **crt** (MSVC90 STL): 394
+- **thunk**: 135
 
 ## Bot-authored functions
 

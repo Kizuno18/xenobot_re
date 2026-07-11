@@ -61,13 +61,76 @@ manual-mapped, string-obfuscated module, not in the Qt shell.
 `MapViewOfFile`; `USER32` `GetWindowThreadProcessId`. No exports — driven from
 `DllEntryPoint` (`0x10007DA0`) once mapped.
 
-## Status
+## Full function map
 
-The 4 load-bearing functions are named in `XenoObfuscatedLib.dll.i64`; the
-remaining ~150 are the string-decrypt helpers and WinHTTP/CRT plumbing around
-them. A full per-function pass would first defeat the string obfuscation
-(decrypt the literal table `g_1000C6A8`-style constants) — tracked as a
-follow-up. The behavioural map above is complete for detection purposes.
+All 159 functions are named in `XenoObfuscatedLib.dll.i64` (the 23 protection
+functions below + the MSVC100 std::string/CRT plumbing). The engine, by area:
+
+### String deobfuscation
+
+`initObfuscatedStrings` (`0x10002020`) — on first call, `srand(GetTickCount)` +
+`rand` and **XOR-decrypts** the obfuscated global literals into runtime globals:
+the license host, a **fallback host `verify.xf.yone.to`**,
+`system32\drivers\etc\hosts`, and `hostname`. Every sensitive string is decrypted
+on demand, which is why `strings` finds none of them.
+
+### License handshake — `performLicenseHandshake` (`0x10003BD0`)
+
+The SYN → SYNACK state machine ([`17`](17-auth-and-distribution.md)): runs the
+anti-debug gate, builds + **MD5-hashes the HWID** (`buildHardwareId` +
+`md5HashStdString` `0x10001980`, own MD5 impl `md5Transform`/`Update`/`Finalize`),
+URL-encodes it (`urlPercentEncode` `0x10006A50`), constructs the request
+(`buildVerifyPhpRequest`), and on state 1 sends SYNACK via
+`verifyLicenseWithAntiDebug`, caching the 0x410-byte response into
+`dword_1000C69C`/`dword_1000C6A0` (the license-state globals).
+
+### WebStreamer — the HTTPS client
+
+`webStreamerCtor` (`0x100062A0`, `WebStreamer(std::string url)`, emits
+`OutputDebugStringA("OB…")`), `webStreamerHttpRequest` (`0x100063D0`,
+`WinHttpOpen(L"XenoBot")` + timeouts + HTTPS GET), `webStreamerSplitResponsePipe`
+(`0x10006740`, tokenizes the reply over `std::istringstream`/`getline`),
+`webStreamerDtor` (`0x10006340`, `WinHttpCloseHandle` the three handles). The
+User-Agent literal is **`XenoBot`**.
+
+### Anti-crack — hosts-file check
+
+`hostsFileContainsBlock` (`0x10002490`) reads `…\system32\drivers\etc\hosts` line
+by line and returns true if any line contains the decrypted blocklist token — a
+guard against **redirecting the license server via the hosts file** (the classic
+offline-crack). Combined with the `verify.xf.yone.to` fallback host, this hardens
+the license check against DNS/hosts tampering.
+
+### Anti-debug suite
+
+| Function | Addr | Check |
+|---|---|---|
+| `makeProcessCriticalAndExit` | `0x100075D0` | `ntdll!RtlSetProcessIsCritical` — a debugger-triggered **BSOD** bail-out |
+| `detectHardwareBreakpoints` | `0x10007620` | reads the thread `CONTEXT` and inspects **DRx** debug registers |
+| `detectKernelDebuggerDevices` | `0x100076D0` | `CreateFileA`-probes a table of kernel-debugger device names (SoftICE `\\.\EXTREM…` etc.) |
+| *(inline)* | — | `CheckRemoteDebuggerPresent` + `PEB->BeingDebugged` |
+
+### License-gated injection (the real inject path)
+
+The injection is **here**, not just in the Qt shell — and it is gated on a valid
+license. It operates on a **120-byte-stride TibiaClient window table** at
+`MEMORY[0x1000C694]`:
+
+- `findInjectionTargetWindow` (`0x10004150`) — match a client window (confirming
+  `GetWindowThreadProcessId` == stored PID; bails on SoftICE);
+- `countActiveClientWindows` / `getClientWindowByIndex` (`0x10004350`/`0x10004400`)
+  — enumerate live clients;
+- `stageInjectionPayload` (`0x10004230`) — only if license state
+  `dword_1000C69C == 1||5` and the `dword_1000C6A0` mirror matches, stages the
+  remote-thread start routine / param / **magic `1235` / `666` / `0xBADF00D`** and
+  the module path into the table entry;
+- `injectViaRemoteThread` (`0x10004480`) — `CreateRemoteThread` the staged routine
+  into the target, `WaitForSingleObject` + `GetExitCodeThread` + `CloseHandle`.
+
+So the launcher's `injectLoadLibraryW` ([`03`](03-injection-chain.md)) loads the
+bot module, but the **licensed** injection decision runs inside this
+manual-mapped, anti-debugged module — you cannot reach it without passing the
+`verify.php` gate.
 
 ## Detection fingerprints
 

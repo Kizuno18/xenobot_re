@@ -54,6 +54,24 @@ dispatchers:
 This is the packet-proxy/injection surface an anti-cheat watches: the bot both
 parses inbound packets (to update state) and forges/filters outbound ones.
 
+**Opcode → handler dispatch map** (from `parseIncomingServerPacket`):
+
+| Opcode | Handler | What |
+|---|---|---|
+| 106 | *(inline in `parseIncomingServerPacket`)* | creature-move / add |
+| 108 | `onTileRemoveCreature` (`0x10017f60`) | tile-remove creature |
+| 11 / 13 | `detectMoveUseFishingGesture` (`0x10018390`) | statusbar / inventory-change state machine |
+| 133 | `onAnimatedTextProjectile` (`0x10018030`) | animated text / missile (hit-count tracking) |
+| 143 | `onCreatureHealthAutoAttack` (`0x10015820`) | creature health-percent update (auto-attack trigger) |
+| 170 | `onChannelMessageTradeParser` (`0x10016230`) | channel message — the **market/trade bot** + URL-filter kick |
+| 180 | `decodeCreatureSpeechPacket` (`0x10018600`) | creature speech → 0x1C struct |
+| 2128–2130 | `updateTrackedCreaturePosition` (`0x10012740`) | move/effect on tracked objects |
+
+The big monolithic engine is `gameStateDispatchGiant` (`0x10018c20`, ~53.7 KB) —
+a several-hundred-branch routine. Outbound is filtered by `parseOutgoingClientPacket`
+(`0x10013980`); hooks are written by `jmpPatchWriteBytes` (`0x1003a8e0`, the x86
+`E9 rel32` + NOP JMP patcher).
+
 ## Cavebot / walker
 
 `walkerFollowTargetStep` (`0x10010770`) is the step engine — gated by state flags,
@@ -103,10 +121,17 @@ C++ wrapper class:
 | `luaWrapperReportError` | `0x1005ada0` | pull the error off the stack |
 | `loadHotkeysLuaConfig` | `0x10012860` | load the 8×36 hotkey table from `Hotkeys\Config<n>.lua` |
 
-Scripts (the shipped `Scripter/*.lua`, and user scripts) call a C game API the DLL
-registers; the OO `Creature.lua` wrapper ([`16`](16-bot-core.md)) sits on top. The
-game-state the API exposes is read through the resolved offsets from
-`loadTibiaClientAddressProfile`.
+**Lua game-API scope (1.3.4).** The full `getCreatureHealthPercent`-style game API
+that `Scripter/Creature.lua` calls is **not** implemented as C handlers in this
+1.3.4 DLL — a scan of all 392 bot functions finds no `getCreature*`/`getSelf*`
+`lua_CFunction` cluster, and the API names are absent from the binary. In 1.3.4
+the embedded Lua is used chiefly for **hotkey/config** scripts
+(`loadHotkeysLuaConfig`, `saveHotkeysConfigLua`), and the rich creature/tile/self
+game API arrived in the later licensed cores (the `xb.*.dll` from the update
+channel, [`15`](15-update-channel-and-core.md)). The `luaLRegisterModule`
+(`0x1003d750`, `luaL_register`) machinery is present, but the shipped
+`Scripter/Creature.lua` targets that newer API surface, not this build. Mapping
+each `get*` API entry to its C handler therefore requires a modern licensed core.
 
 ## HWID / crypto
 
