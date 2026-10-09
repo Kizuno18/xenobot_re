@@ -1,79 +1,177 @@
-# xenobot_re — XenoBot / XenoSuite reverse engineering
+# XenoBot Reverse Engineering
 
-Private research repo. Static reverse engineering and function-by-function
-documentation of **XenoBot** (xenobot.net), a memory-injection bot for the Tibia
-game client. Defensive RE: the goal is a detection/behaviour map that informs an
-anti-cheat (CoreGuard), not a working bot.
+**Launcher, protection core, and bot-engine analysis for XenoBot / XenoSuite.**
 
-Everything here is RE of binaries the operator legally possesses, on the
-operator's own lab. Analysis is static (IDA Pro + Hex-Rays over MCP) plus, later,
-controlled dynamic dumps on an isolated Windows VM. No live game servers are
-touched during static analysis.
+[Start here](docs/01-overview.md) · [Documentation](#documentation) · [Detection map](docs/08-detection-map.md) · [Research status](docs/00-status.md)
 
-## The distribution
+`xenobot_re` documents the architecture and behavior of **XenoBot**, a native
+Windows bot for the Tibia game client. It follows the system from its Qt-based
+launcher through injection, local communication, update and authentication flows,
+and the recovered bot engine.
 
-The `setup.msi` (5.6 MB, product "XenoBot", built 2017-05-31) installs a **Qt 4.8
-launcher/injector**, not the bot itself. The bot's game logic lives in a separate
-module that the launcher downloads from the server at runtime (see below).
+The goal is a **defensive reverse-engineering reference**: traceable findings,
+function catalogs, and behavioral fingerprints for security research. This is not
+the original XenoBot source code, a maintained bot release, or an installation guide.
 
-| File | Size | What it is | Protection |
-|---|---|---|---|
-| `XenoSuite.exe` | 429 KB | **the launcher/injector/updater** — GUI, license client, injects the bot module into Tibia | MSVC10, unpacked |
-| `QtGui4.dll` | 7.4 MB | Qt 4.8.6 GUI framework | off-the-shelf, unpacked |
-| `QtCore4.dll` | 2.1 MB | Qt 4.8.6 core framework | off-the-shelf, unpacked |
-| `QtNetwork4.dll` | 785 KB | Qt 4.8.6 network framework | off-the-shelf, unpacked |
-| `lua5.1.dll` | 164 KB | stock Lua 5.1.4 scripting VM | off-the-shelf, unpacked |
+## Research highlights
 
-Data assets: `Sounds/*.wav` (alarm sounds), `Examples/*.lua` (10 example bot
-scripts — the public XenoBot Lua API surface).
+- **The installer is not the whole bot.** The analyzed MSI contains the
+  `XenoSuite.exe` launcher and runtime dependencies; game automation lives in a
+  separate module. A historical `XenoBot.dll` 1.3.4 was recovered and analyzed
+  independently. See the [architecture](docs/01-overview.md) and
+  [bot-core investigation](docs/16-bot-core.md).
+- **Three components, three analysis scopes.** The launcher, embedded
+  **XenoObfuscatedLib** protection module, and recovered bot core each have a
+  dedicated function catalog and subsystem documentation.
+- **Behavior linked to evidence.** The [detection map](docs/08-detection-map.md)
+  brings together injection, IPC, network, and static fingerprints, with deeper
+  chapters explaining the underlying mechanisms rather than relying on names alone.
 
-**The bot core** (cavebot, targeting, healer, Lua game API, client hooks) is not
-in `setup.msi` — `XenoSuite.exe` fetches it from xenobot.net after a license
-check. It has since been **recovered**: XenoBot went free/EOL, and the old
-monolithic RARs ship the injected `XenoBot.dll` directly. It is now RE'd
-function-by-function ([`docs/16`](docs/16-bot-core.md), [`docs/19`](docs/19-bot-core-engines.md)).
+## Architecture at a glance
 
-## Docs
+```text
+setup.msi
+  |
+  +-- XenoSuite.exe                  Qt launcher / updater / injector
+  |     |
+  |     +-- XenoObfuscatedLib        Embedded protection / authentication module
+  |     +-- Update and auth flows    Version and client-profile selection
+  |     +-- Local IPC                Named pipes and local sockets
+  |     |
+  |     +-- Bot module -----------> Tibia client process
+  |                                  hooks / game state / feature engines / Lua
+  |
+  +-- Qt and Lua runtime dependencies
 
-| Doc | What |
-|---|---|
-| [`docs/00-status.md`](docs/00-status.md) | Resume point — what's done / in progress / TODO |
-| [`docs/01-overview.md`](docs/01-overview.md) | Architecture: launcher vs bot-core split, injection chain, IPC, subsystem map |
-| [`docs/02-static-analysis.md`](docs/02-static-analysis.md) | PE structure, sections, imports, exports per binary; the injection/IPC/update API evidence |
-| [`docs/03-injection-chain.md`](docs/03-injection-chain.md) | Target discovery (`"TibiaClient"`) + `LoadLibraryW` remote-thread injection, function-by-function |
-| [`docs/04-ipc.md`](docs/04-ipc.md) | The tracked-client list + local IPC (named pipe + `xenosuitesock%1` QLocalServer, `SOCKET_*` vocabulary) |
-| [`docs/05-network-update.md`](docs/05-network-update.md) | License/update/download + the password-leaking monitor telemetry; all endpoints |
-| [`docs/06-integrity.md`](docs/06-integrity.md) | `WinVerifyTrust` self-tamper check + acceptance policy |
-| [`docs/07-support-subsystems.md`](docs/07-support-subsystems.md) | Embedded `RT_RCDATA` resource, Lua host, GDI screenshot, `CreateProcessW` launcher |
-| [`docs/08-detection-map.md`](docs/08-detection-map.md) | **Consolidated anti-cheat fingerprints** (network / host / IPC / static) |
-| [`docs/09-control-flow.md`](docs/09-control-flow.md) | **Master control flow** — boot, `http://` web-launch handler, window/timers/threads |
-| [`docs/10-injection-framework.md`](docs/10-injection-framework.md) | LoadLibraryW versioned module + manual PE mapper + ntdll anti-hook |
-| [`docs/11-embedded-module-crypto.md`](docs/11-embedded-module-crypto.md) | The `.rsrc` = XTEA-encrypted **XenoObfuscatedLib** (DarkstaR); decryptor |
-| [`docs/12-address-profiles.md`](docs/12-address-profiles.md) | Per-version client offsets in XOR-encrypted `.xblua` Lua tables |
-| [`docs/13-multiclient-handles.md`](docs/13-multiclient-handles.md) | Multiclient: `NtQuerySystemInformation` handle enum + `TibiaPlayerMutex` release |
-| [`docs/14-xenoobfuscatedlib.md`](docs/14-xenoobfuscatedlib.md) | The decrypted protection core: `/verify.php` license, HWID, anti-debug |
-| [`docs/15-update-channel-and-core.md`](docs/15-update-channel-and-core.md) | Update channel + live bot-core inventory (17 DLL+Lua cores, 63 `.xblua`); dynamic test |
-| [`docs/16-bot-core.md`](docs/16-bot-core.md) | **The recovered bot core** `XenoBot.dll` (free EOL RARs): triage, Lua API, hooks |
-| [`docs/17-auth-and-distribution.md`](docs/17-auth-and-distribution.md) | `verify.php` SYN/SYNACK auth, free/EOL status, full site download inventory |
-| [`docs/18-re-journey.md`](docs/18-re-journey.md) | **Engagement log** — the whole RE arc (launcher → protection core → dynamic → bot core) |
-| [`docs/19-bot-core-engines.md`](docs/19-bot-core-engines.md) | **Bot-core engines** `XenoBot.dll` — address resolution, hooks, packet, cavebot/targeting/healer, Lua host |
-| [`docs/functions/catalog.md`](docs/functions/catalog.md) | Full per-function catalog — every function named + purposed (141 bot) |
+Recovered XenoBot.dll 1.3.4: separately analyzed historical bot-core build
+```
 
-## Method
+The recovered 1.3.4 core is **not interchangeable with every later versioned
+`xb.*.dll`**. Findings about its engine and Lua interface must be read in that
+build's context, not assumed to describe the entire update-channel inventory.
 
-- **Static:** IDA Pro headless (idalib) + Hex-Rays, driven over the windows-lab
-  MCP gateway (`re03-mcp.kizubot.com`). Function names/comments are persisted into
-  the `.i64` as analysis proceeds. Ghidra cross-checks.
-- **Triage:** local `pefile`/`capstone` (`tools/pe_recon.py`).
-- **Dynamic (later):** pe-sieve / x64dbg / Frida on the isolated VM to dump the
-  runtime-fetched bot module and trace injection + IPC.
-- Addresses are file-absolute at the stated imagebase (`0x400000` for
-  `XenoSuite.exe`).
+## Analyzed components and coverage
 
-## Conventions
+The [status report](docs/00-status.md) records the following analysis counts.
+Names and purpose comments in an analysis database are distinct from the smaller,
+curated function catalogs committed as readable documentation.
 
-LF endings, UTF-8, English. Binaries live in `samples/` (gitignored — vendor
-copyright; hashes in [`samples/SAMPLES.md`](samples/SAMPLES.md)) and are delivered
-to the analysis VM out-of-band, never through context. IDA databases are not
-committed (regenerable). The `.mcp.json` carries the per-VM token and is
-gitignored.
+| Component | Role | Recorded coverage | Reference |
+| --- | --- | --- | --- |
+| `XenoSuite.exe` | Qt 4.8 launcher, updater, license client, and injector | 1,279 of 1,325 functions named with purpose comments; 141 bot-authored functions in the detailed catalog | [Launcher catalog](docs/functions/catalog.md) |
+| `XenoObfuscatedLib` | Embedded protection and authentication module | 159 functions named; 23 protection functions documented in the focused catalog | [Protection catalog](docs/functions/xoblib-catalog.md) |
+| `XenoBot.dll` 1.3.4 | Recovered historical engine: hooks, scripting, targeting, healing, and navigation | 1,649 of 1,822 functions reported named and purposed; 392 bot functions in the focused catalog | [Bot-core catalog](docs/functions/xbcore-catalog.md) |
+| Qt / Lua dependencies | Third-party GUI, networking, and scripting runtimes | Identified during triage; not equivalent to XenoBot-authored logic | [Static analysis](docs/02-static-analysis.md) |
+
+The analyzed installer also includes example Lua scripts and sound assets.
+Sample provenance and hashes are recorded in [`samples/SAMPLES.md`](samples/SAMPLES.md).
+Vendor binaries are excluded by the repository's sample-handling conventions.
+
+## Documentation
+
+### Choose a reading path
+
+| Goal | Start with |
+| --- | --- |
+| Understand the system | [Overview](docs/01-overview.md) → [Control flow](docs/09-control-flow.md) → [Recovered bot core](docs/16-bot-core.md) |
+| Study detection-relevant behavior | [Detection map](docs/08-detection-map.md) → [Injection framework](docs/10-injection-framework.md) → [IPC](docs/04-ipc.md) |
+| Follow protection and distribution | [Embedded module](docs/11-embedded-module-crypto.md) → [Protection core](docs/14-xenoobfuscatedlib.md) → [Authentication and distribution](docs/17-auth-and-distribution.md) |
+| Explore game-engine internals | [Bot-core engines](docs/19-bot-core-engines.md) → [Core function catalog](docs/functions/xbcore-catalog.md) |
+| Understand the investigation's limits | [Research journey](docs/18-re-journey.md) → [Status and follow-ups](docs/00-status.md) |
+
+<details>
+<summary><strong>Complete documentation index — 20 chapters</strong></summary>
+
+| Chapter | Subject |
+| --- | --- |
+| [00 — Status](docs/00-status.md) | Coverage, recorded milestones, and follow-up work |
+| [01 — Overview](docs/01-overview.md) | Launcher / core split and subsystem architecture |
+| [02 — Static analysis](docs/02-static-analysis.md) | PE structures, imports, exports, and dependency triage |
+| [03 — Injection chain](docs/03-injection-chain.md) | Client discovery and remote-thread library loading |
+| [04 — IPC](docs/04-ipc.md) | Tracked clients, named pipes, local sockets, and message vocabulary |
+| [05 — Network and updates](docs/05-network-update.md) | License, update, download, and cleartext telemetry behavior |
+| [06 — Integrity](docs/06-integrity.md) | Signature verification and self-integrity policy |
+| [07 — Support subsystems](docs/07-support-subsystems.md) | Resources, Lua hosting, screenshots, and process launching |
+| [08 — Detection map](docs/08-detection-map.md) | Consolidated host, network, IPC, and static fingerprints |
+| [09 — Control flow](docs/09-control-flow.md) | Startup, web-launch handling, windows, timers, and threads |
+| [10 — Injection framework](docs/10-injection-framework.md) | Versioned modules, manual PE mapping, and anti-hook behavior |
+| [11 — Embedded-module crypto](docs/11-embedded-module-crypto.md) | XTEA-protected resource payload and extracted module |
+| [12 — Address profiles](docs/12-address-profiles.md) | Per-client offsets in encoded `.xblua` tables |
+| [13 — Multiclient handles](docs/13-multiclient-handles.md) | Handle enumeration and client-mutex handling |
+| [14 — XenoObfuscatedLib](docs/14-xenoobfuscatedlib.md) | Protection, hardware identity, authentication, and anti-debug behavior |
+| [15 — Update channel and core](docs/15-update-channel-and-core.md) | Historical manifest inventory and dynamic observations |
+| [16 — Bot core](docs/16-bot-core.md) | Recovered `XenoBot.dll`, Lua interface, and client hooks |
+| [17 — Authentication and distribution](docs/17-auth-and-distribution.md) | Handshake analysis and historical distribution findings |
+| [18 — Research journey](docs/18-re-journey.md) | Investigation sequence, pivots, and acquisition constraints |
+| [19 — Bot-core engines](docs/19-bot-core-engines.md) | Address resolution, packets, feature engines, and Lua hosting |
+
+</details>
+
+### Function-level reference
+
+| Catalog | Focus |
+| --- | --- |
+| [`catalog.md`](docs/functions/catalog.md) | Launcher and XenoSuite-authored behavior |
+| [`xoblib-catalog.md`](docs/functions/xoblib-catalog.md) | Protection-core routines |
+| [`xbcore-catalog.md`](docs/functions/xbcore-catalog.md) | Recovered bot-engine routines |
+
+Machine-readable inventories accompany the catalogs under
+[`docs/functions/`](docs/functions/).
+
+## Repository layout
+
+```text
+docs/               Numbered architecture and subsystem reports
+  data/             Captured update-manifest reference
+  functions/        Function catalogs and machine-readable inventories
+samples/            Sample manifest and retained example assets
+tools/              PE triage, extraction, naming, and catalog helpers
+```
+
+No setup is needed to read the documentation. The main analysis helpers include:
+
+| Tool | Purpose |
+| --- | --- |
+| [`tools/pe_recon.py`](tools/pe_recon.py) | Local PE reconnaissance |
+| [`tools/re_mcp.py`](tools/re_mcp.py) | Client for a separately configured analysis gateway |
+| [`tools/extract_all.py`](tools/extract_all.py) | Bulk extraction support for the analysis workflow |
+| [`tools/apply_names.py`](tools/apply_names.py) | Apply recovered names and comments to an analysis database |
+| [`tools/build_catalog.py`](tools/build_catalog.py) | Build readable function-reference material |
+
+The research used `pefile` / `capstone`, IDA Pro / Hex-Rays, and Ghidra, with
+controlled dynamic observations on a Windows analysis VM. Remote helpers require
+your own environment and local configuration; historical lab infrastructure is
+not a service provided by this repository. Analysis databases are not committed.
+
+## Evidence and limitations
+
+**Build-specific findings.** Coverage of the recovered 1.3.4 core does not imply
+full analysis or runtime validation of all later licensed cores. In particular,
+Lua API differences between the recovered core and later versions remain an
+explicit boundary in the research.
+
+**Historical observations.** Update manifests, download availability, license
+responses, and network endpoints describe what was observed during the
+investigation—not a statement that those services still exist or behave the same
+way. Static findings and exploratory dynamic work are documented separately.
+
+**Research environment.** Some analyzed protection paths can destabilize the host,
+including critical-process behavior described in the
+[protection-core report](docs/14-xenoobfuscatedlib.md). Treat unknown binaries as
+untrusted and use disposable, isolated environments for any reproduction.
+
+Addresses are hexadecimal **virtual addresses at the stated image base**, not
+raw file offsets. `XenoSuite.exe` is analyzed at `0x00400000`; consult each module's
+report for its own base and build. Recovered names are analysis labels, not a
+claim to original vendor symbols.
+
+## Contributing research
+
+Include the binary identity or hash, build, address, and supporting evidence when
+proposing a correction. Separate disassembly-backed facts, runtime observations,
+and hypotheses; preserve the distinction between the launcher, protection module,
+and bot core.
+
+Documentation and commit messages use English, UTF-8, LF endings, and a final
+newline. Keep credentials, private lab configuration, vendor binaries, and
+unrelated personal data out of contributions.
